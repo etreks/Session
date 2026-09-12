@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.satyam.session.SessionApp
 import com.satyam.session.data.model.ActivityBucket
+import com.satyam.session.data.model.Session
 import com.satyam.session.util.TimeUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,6 +19,8 @@ data class BucketStats(
     val bucket: ActivityBucket,
     val totalDurationMs: Long,
     val sessionCount: Int,
+    val percentage: Float,
+    val sessions: List<Session>,
 )
 
 data class StatsUiState(
@@ -25,6 +28,8 @@ data class StatsUiState(
     val bucketStats: List<BucketStats> = emptyList(),
     val totalDurationMs: Long = 0L,
     val totalSessionCount: Int = 0,
+    val averageDurationMs: Long = 0L,
+    val topBucketName: String? = null,
 )
 
 class StatsViewModel(application: Application) : AndroidViewModel(application) {
@@ -49,24 +54,39 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
 
                     repository.getSessionsInRange(startMs, endMs).collect { sessions ->
                         val bucketsMap = buckets.associateBy { it.id }
+                        val totalDuration = sessions.sumOf { it.durationMs }
+
                         val statsByBucket = sessions
                             .groupBy { it.bucketId }
                             .map { (bucketId, bucketSessions) ->
+                                val bucket = bucketsMap[bucketId]
+                                    ?: ActivityBucket(name = "Activity", colorHex = "#4CAF50")
+                                val bucketTotal = bucketSessions.sumOf { it.durationMs }
+                                val percentage = if (totalDuration > 0) {
+                                    (bucketTotal.toFloat() / totalDuration.toFloat()) * 100f
+                                } else 0f
+
                                 BucketStats(
-                                    bucket = bucketsMap[bucketId]
-                                        ?: ActivityBucket(name = "Unknown", colorHex = "#888888"),
-                                    totalDurationMs = bucketSessions.sumOf { it.durationMs },
-                                    sessionCount = bucketSessions.size
+                                    bucket = bucket,
+                                    totalDurationMs = bucketTotal,
+                                    sessionCount = bucketSessions.size,
+                                    percentage = percentage,
+                                    sessions = bucketSessions.sortedByDescending { it.startTime }
                                 )
                             }
                             .sortedByDescending { it.totalDurationMs }
+
+                        val avgDuration = if (sessions.isNotEmpty()) totalDuration / sessions.size else 0L
+                        val topBucket = statsByBucket.firstOrNull()?.bucket?.name
 
                         _uiState.update {
                             StatsUiState(
                                 isWeekView = isWeek,
                                 bucketStats = statsByBucket,
-                                totalDurationMs = sessions.sumOf { it.durationMs },
-                                totalSessionCount = sessions.size
+                                totalDurationMs = totalDuration,
+                                totalSessionCount = sessions.size,
+                                averageDurationMs = avgDuration,
+                                topBucketName = topBucket
                             )
                         }
                     }
@@ -76,5 +96,11 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
 
     fun toggleView() {
         _isWeekView.value = !_isWeekView.value
+    }
+
+    fun deleteSession(session: Session) {
+        viewModelScope.launch {
+            repository.deleteSession(session)
+        }
     }
 }
