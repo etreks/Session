@@ -20,9 +20,9 @@ android {
     signingConfigs {
         create("shared") {
             storeFile = file("${rootDir}/keystore/session.jks")
-            storePassword = "session123"
-            keyAlias = "session"
-            keyPassword = "session123"
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
         }
     }
 
