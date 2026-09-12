@@ -17,10 +17,22 @@ android {
         versionName = "1.0"
     }
 
+    signingConfigs {
+        create("shared") {
+            storeFile = file("${rootDir}/keystore/session.jks")
+            storePassword = "session123"
+            keyAlias = "session"
+            keyPassword = "session123"
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("shared")
+        }
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("shared")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
