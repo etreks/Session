@@ -80,7 +80,7 @@ fun SessionNavigation() {
         NavHost(
             navController = navController,
             startDestination = SessionScreen.Stopwatch.route,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
         ) {
             composable(SessionScreen.Stopwatch.route) { StopwatchScreen() }
             composable(SessionScreen.Calendar.route) { CalendarScreen() }

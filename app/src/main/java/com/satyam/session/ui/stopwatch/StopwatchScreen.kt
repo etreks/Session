@@ -104,47 +104,20 @@ fun StopwatchScreen(
         ) {
             Spacer(modifier = Modifier.weight(1f))
 
-            // ── Timer display ────────────────────────────────────────────
-            AnimatedContent(
-                targetState = uiState.elapsedMs,
-                transitionSpec = {
-                    fadeIn(tween(150)) togetherWith fadeOut(tween(150))
-                },
-                label = "timer"
-            ) { elapsed ->
-                Text(
-                    text = TimeUtils.formatDuration(elapsed),
-                    style = MaterialTheme.typography.displayLarge.copy(
-                        fontSize = 64.sp,
-                        fontWeight = FontWeight.Light,
-                        letterSpacing = 2.sp
-                    ),
-                    color = if (uiState.isRunning) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(vertical = 24.dp)
-                )
-            }
-
-            // Pulsing "Recording" indicator
-            if (uiState.isRunning) {
-                val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-                val alpha by infiniteTransition.animateFloat(
-                    initialValue = 0.3f,
-                    targetValue = 1f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(800, easing = EaseInOutCubic),
-                        repeatMode = RepeatMode.Reverse
-                    ),
-                    label = "pulseAlpha"
-                )
-                Text(
-                    text = "● Recording",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = alpha),
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-            }
+            // ── Timer display (monospaced tabular figures, no flicker) ───
+            Text(
+                text = TimeUtils.formatDuration(uiState.elapsedMs),
+                style = MaterialTheme.typography.displayLarge.copy(
+                    fontSize = 68.sp,
+                    fontWeight = FontWeight.Light,
+                    letterSpacing = 2.sp,
+                    fontFeatureSettings = "tnum"
+                ),
+                color = if (uiState.isRunning) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(vertical = 24.dp)
+            )
 
             Spacer(modifier = Modifier.weight(1f))
 
