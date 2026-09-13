@@ -33,25 +33,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Today
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -88,39 +82,7 @@ fun StatsScreen(
     viewModel: StatsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var sessionToDelete by remember { mutableStateOf<Session?>(null) }
     var expandedBucketIds by remember { mutableStateOf(setOf<Long>()) }
-
-    // Session delete confirmation dialog
-    if (sessionToDelete != null) {
-        val session = sessionToDelete!!
-        AlertDialog(
-            onDismissRequest = { sessionToDelete = null },
-            title = { Text("Delete Session?") },
-            text = {
-                Text(
-                    "Are you sure you want to remove this session (${
-                        session.activityLabel.ifBlank { "Activity" }
-                    } · ${TimeUtils.formatDurationShort(session.durationMs)})?"
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.deleteSession(session)
-                        sessionToDelete = null
-                    }
-                ) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { sessionToDelete = null }) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
 
     Scaffold(
         topBar = {
@@ -210,8 +172,7 @@ fun StatsScreen(
                         } else {
                             expandedBucketIds + stats.bucket.id
                         }
-                    },
-                    onDeleteSession = { session -> sessionToDelete = session }
+                    }
                 )
             }
         }
@@ -486,8 +447,7 @@ private fun MetricItem(
 private fun InteractiveBucketCard(
     stats: BucketStats,
     isExpanded: Boolean,
-    onToggleExpand: () -> Unit,
-    onDeleteSession: (Session) -> Unit
+    onToggleExpand: () -> Unit
 ) {
     val bucketColor = try {
         Color(android.graphics.Color.parseColor(stats.bucket.colorHex))
@@ -617,8 +577,7 @@ private fun InteractiveBucketCard(
                         SessionItemRow(
                             session = session,
                             bucketColor = bucketColor,
-                            bucketName = stats.bucket.name,
-                            onDelete = { onDeleteSession(session) }
+                            bucketName = stats.bucket.name
                         )
                     }
                 }
@@ -634,8 +593,7 @@ private fun InteractiveBucketCard(
 private fun SessionItemRow(
     session: Session,
     bucketColor: Color,
-    bucketName: String,
-    onDelete: () -> Unit
+    bucketName: String
 ) {
     val activityName = session.activityLabel.ifBlank { bucketName }
 
@@ -720,19 +678,6 @@ private fun SessionItemRow(
                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                     color = bucketColor,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                )
-            }
-
-            // Delete action
-            IconButton(
-                onClick = onDelete,
-                modifier = Modifier.size(28.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete session",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                    modifier = Modifier.size(16.dp)
                 )
             }
         }

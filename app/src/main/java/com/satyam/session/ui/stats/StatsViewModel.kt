@@ -97,10 +97,4 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
     fun toggleView() {
         _isWeekView.value = !_isWeekView.value
     }
-
-    fun deleteSession(session: Session) {
-        viewModelScope.launch {
-            repository.deleteSession(session)
-        }
-    }
 }
